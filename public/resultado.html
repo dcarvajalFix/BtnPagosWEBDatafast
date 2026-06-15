@@ -98,6 +98,7 @@
         /* -----------------------------------------------
            BOTONES
         ----------------------------------------------- */
+        
         .btn {
             width: 100%;
             padding: 15px;
@@ -184,12 +185,12 @@
         </button>
 
         <button class="btn btn-secundario" onclick="window.print()">
-            🖨️ Imprimir comprobante
+            Imprimir comprobante
         </button>
 
         <!-- SELLO -->
         <div class="seguridad">
-            🔒 Pago procesado de forma segura por Datafast
+            Pago procesado de forma segura por Datafast
         </div>
 
     </div>
@@ -232,6 +233,7 @@
         // -----------------------------------------------
         // MOSTRAR PAGO APROBADO
         // -----------------------------------------------
+
         function mostrarAprobado(datos) {
             document.getElementById('icono').textContent = '✅';
             document.getElementById('titulo').textContent = '¡Pago exitoso!';
@@ -245,19 +247,20 @@
         // -----------------------------------------------
         // MOSTRAR PAGO RECHAZADO
         // -----------------------------------------------
+
         function mostrarRechazado(datos) {
             document.getElementById('icono').textContent = '❌';
             document.getElementById('titulo').textContent = 'Pago rechazado';
             document.getElementById('titulo').className = 'titulo-rechazado';
             document.getElementById('subtitulo').textContent = 
                 'Tu pago no pudo ser procesado. Intenta de nuevo.';
-
             llenarDetalles(datos);
         }
 
         // -----------------------------------------------
         // MOSTRAR ERROR
         // -----------------------------------------------
+
         function mostrarError(mensaje) {
             document.getElementById('icono').textContent = '⚠️';
             document.getElementById('titulo').textContent = 'Error';
@@ -268,6 +271,7 @@
         // -----------------------------------------------
         // LLENAR LOS DETALLES DE LA TRANSACCION
         // -----------------------------------------------
+
         function llenarDetalles(datos) {
             if (!datos) return;
 

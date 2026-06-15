@@ -25,7 +25,7 @@ dotenv.config();
 const app = express(); 
 
 
-const mindbodyRoutes = require('./routes/mindbody');
+
 
 /*
 Definimos el puerto en el que queremos que se abra para desplegar la web, la parte de "|| 3000" significa que si no encuentra
@@ -58,8 +58,6 @@ app.use(express.static(path.join( __dirname, '../public')));
 Cualquier url que empiece con api/payments lo enrutamos a ./routes/payments.js
 */
 app.use('/api/payment', paymentRoutes); 
-
-app.use('/api/mindbody', mindbodyRoutes);
 
 /*------------------------- RUTAS -------------------------*/
 
