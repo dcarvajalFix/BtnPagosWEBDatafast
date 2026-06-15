@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pago Seguro - FixGroup</title>
+
+    <style>
+        /* -----------------------------------------------
+           ESTILOS GENERALES
+        ----------------------------------------------- */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f5f5f5;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        /* -----------------------------------------------
+           CONTENEDOR PRINCIPAL
+        ----------------------------------------------- */
+        .contenedor {
+            background: white;
+            border-radius: 10px;
+            padding: 30px;
+            width: 100%;
+            max-width: 500px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        /* -----------------------------------------------
+           ENCABEZADO
+        ----------------------------------------------- */
+        .encabezado {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .encabezado h1 {
+            color: #333;
+            font-size: 24px;
+            margin-bottom: 5px;
+        }
+
+        .encabezado p {
+            color: #666;
+            font-size: 14px;
+        }
+
+        /* -----------------------------------------------
+           RESUMEN DEL PAGO
+        ----------------------------------------------- */
+        .resumen {
+            background: #f9f9f9;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 25px;
+        }
+
+        .resumen h2 {
+            color: #333;
+            font-size: 16px;
+            margin-bottom: 15px;
+        }
+
+        .resumen-fila {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            font-size: 14px;
+            color: #555;
+        }
+
+        .resumen-fila.total {
+            border-top: 1px solid #ddd;
+            padding-top: 10px;
+            margin-top: 10px;
+            font-weight: bold;
+            color: #333;
+            font-size: 16px;
+        }
+
+        /* -----------------------------------------------
+           BOTÓN DE PAGO
+        ----------------------------------------------- */
+        .btn-pagar {
+            width: 100%;
+            padding: 15px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            margin-bottom: 20px;
+            transition: background-color 0.3s;
+        }
+
+        .btn-pagar:hover {
+            background-color: #45a049;
+        }
+
+        .btn-pagar:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+
+        /* -----------------------------------------------
+           FORMULARIO DE DATAFAST
+           Aquí aparecerá el widget de Datafast
+        ----------------------------------------------- */
+        #formulario-datafast {
+            display: none;
+            margin-top: 20px;
+        }
+
+        /* -----------------------------------------------
+           MENSAJES DE ESTADO
+        ----------------------------------------------- */
+        .mensaje {
+            display: none;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+            text-align: center;
+            font-size: 14px;
+        }
+
+        .mensaje.error {
+            background-color: #ffebee;
+            color: #c62828;
+            border: 1px solid #ef9a9a;
+        }
+
+        .mensaje.cargando {
+            background-color: #e3f2fd;
+            color: #1565c0;
+            border: 1px solid #90caf9;
+        }
+
+        /* -----------------------------------------------
+           SELLO DE SEGURIDAD
+        ----------------------------------------------- */
+        .seguridad {
+            text-align: center;
+            margin-top: 20px;
+            color: #999;
+            font-size: 12px;
+        }
+
+        .seguridad span {
+            margin: 0 5px;
+        }
+    </style>
+</head>
+<h1></h1>
+
+<body>
+    <div class="contenedor">
+
+        <!-- ENCABEZADO -->
+        <div class="encabezado">
+            <h1>💳 Pago Seguro</h1>
+            <p>Powered by Datafast</p>
+        </div>
+
+        <!-- RESUMEN DEL PAGO -->
+        <div class="resumen">
+            <h2>Resumen</h2>
+
+            <div class="resumen-fila">
+                <span>Servicio</span>
+                <span id="nombre-servicio">Membresía mensual</span>
+            </div>
+
+            <div class="resumen-fila">
+                <span>Subtotal</span>
+                <span id="subtotal">$1.00</span>
+            </div>
+
+            <div class="resumen-fila total">
+                <span>Total a pagar</span>
+                <span id="total">$1.00</span>
+            </div>
+        </div>
+
+        <!-- BOTÓN PARA INICIAR EL PAGO -->
+        <button class="btn-pagar" id="btn-pagar" onclick="iniciarPago()">
+            Pagar ahora
+        </button>
+
+        <!-- MENSAJE DE ESTADO -->
+        <div class="mensaje cargando" id="mensaje-cargando">
+            Conectando con Datafast...
+        </div>
+
+        <div class="mensaje error" id="mensaje-error">
+            Hubo un error al procesar el pago. Intenta de nuevo.
+        </div>
+
+        <!-- AQUÍ APARECE EL FORMULARIO DE DATAFAST -->
+        <div id="formulario-datafast">
+            <!-- 
+                Datafast inyecta aquí su formulario
+                usando el checkoutId que obtenemos
+                del servidor
+            -->
+        </div>
+
+        <!-- SELLO DE SEGURIDAD -->
+        <div class="seguridad">
+            <span>Pago seguro</span>
+            <span>|</span>
+            <span>SSL cifrado</span>
+            <span>|</span>
+            <span>PCI DSS</span>
+        </div>
+
+    </div>
+
+    <script>
+        // -----------------------------------------------
+        // VARIABLES GLOBALES
+        // -----------------------------------------------
+
+        // Monto a cobrar (luego vendrá de Mind Body)
+        const MONTO = '1.00';
+
+        // -----------------------------------------------
+        // FUNCIÓN PRINCIPAL: iniciarPago
+        // Se ejecuta cuando el cliente hace clic en "Pagar"
+        // -----------------------------------------------
+        async function iniciarPago() {
+
+            // Deshabilitamos el botón para evitar doble clic
+            const boton = document.getElementById('btn-pagar');
+            boton.disabled = true;
+
+            // Mostramos el mensaje de cargando
+            mostrarMensaje('cargando');
+
+            try {
+                // Le pedimos al servidor el checkoutId
+                // El servidor lo pide a Datafast
+                const respuesta = await fetch('/api/payment/crear-checkout', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        monto: MONTO,
+                        moneda: 'USD'
+                    })
+                });
+
+                // Convertimos la respuesta a JSON
+                const datos = await respuesta.json();
+
+                // Si todo salió bien mostramos el formulario
+                if (datos.ok) {
+                    mostrarFormularioDatafast(datos.checkoutId);
+                } else {
+                    mostrarMensaje('error');
+                    boton.disabled = false;
+                }
+
+            } catch (error) {
+                console.error('Error:', error);
+                mostrarMensaje('error');
+                boton.disabled = false;
+            }
+        }
+
+        // -----------------------------------------------
+        // FUNCIÓN: mostrarFormularioDatafast
+        // Carga el widget de Datafast con el checkoutId
+        // -----------------------------------------------
+        function mostrarFormularioDatafast(checkoutId) {
+
+            // Ocultamos el mensaje de cargando
+            ocultarMensajes();
+
+            // Obtenemos el div donde va el formulario
+            const contenedor = document.getElementById('formulario-datafast');
+
+            // Mostramos el contenedor
+            contenedor.style.display = 'block';
+
+            // Creamos el script de Datafast dinámicamente
+            // Este script carga el formulario de tarjeta
+            const script = document.createElement('script');
+            script.src = `https://eu-test.oppwa.com/v1/paymentWidgets.js?checkoutId=${checkoutId}`;
+            document.body.appendChild(script);
+
+            // Creamos el formulario que Datafast necesita
+            // shopperResultUrl es a donde redirige después del pago
+            const form = document.createElement('form');
+            form.action = `${window.location.origin}/resultado`;
+            form.className = 'paymentWidgets';
+            form.setAttribute('data-brands', 'VISA MASTER AMEX DINERS DISCOVER');
+
+            // Metemos el formulario en el contenedor
+            contenedor.appendChild(form);
+
+            // Ocultamos el botón de pagar
+            document.getElementById('btn-pagar').style.display = 'none';
+        }
+
+        // -----------------------------------------------
+        // FUNCIONES DE AYUDA PARA LOS MENSAJES
+        // -----------------------------------------------
+        function mostrarMensaje(tipo) {
+            ocultarMensajes();
+            document.getElementById(`mensaje-${tipo}`).style.display = 'block';
+        }
+
+        function ocultarMensajes() {
+            document.getElementById('mensaje-cargando').style.display = 'none';
+            document.getElementById('mensaje-error').style.display = 'none';
+        }
+
+    </script>
+
+</body>
+</html>

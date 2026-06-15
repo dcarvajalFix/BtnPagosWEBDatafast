@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Resultado del Pago</title>
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f5f5f5;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .contenedor {
+            background: white;
+            border-radius: 10px;
+            padding: 40px 30px;
+            width: 100%;
+            max-width: 500px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+
+        /* -----------------------------------------------
+           ICONO GRANDE DE RESULTADO
+        ----------------------------------------------- */
+        .icono {
+            font-size: 80px;
+            margin-bottom: 20px;
+        }
+
+        /* -----------------------------------------------
+           TITULO
+        ----------------------------------------------- */
+        .titulo-aprobado {
+            color: #2e7d32;
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+
+        .titulo-rechazado {
+            color: #c62828;
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+
+        .subtitulo {
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 30px;
+        }
+
+        /* -----------------------------------------------
+           DETALLES DE LA TRANSACCION
+        ----------------------------------------------- */
+        .detalles {
+            background: #f9f9f9;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 25px;
+            text-align: left;
+        }
+
+        .detalles h3 {
+            color: #333;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 15px;
+        }
+
+        .detalle-fila {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            font-size: 14px;
+        }
+
+        .detalle-fila .etiqueta {
+            color: #666;
+        }
+
+        .detalle-fila .valor {
+            color: #333;
+            font-weight: bold;
+        }
+
+        /* -----------------------------------------------
+           BOTONES
+        ----------------------------------------------- */
+        .btn {
+            width: 100%;
+            padding: 15px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            margin-bottom: 10px;
+            transition: background-color 0.3s;
+        }
+
+        .btn-principal {
+            background-color: #1976d2;
+            color: white;
+        }
+
+        .btn-principal:hover {
+            background-color: #1565c0;
+        }
+
+        .btn-secundario {
+            background-color: #f5f5f5;
+            color: #333;
+            border: 1px solid #ddd;
+        }
+
+        .btn-secundario:hover {
+            background-color: #eeeeee;
+        }
+
+        /* -----------------------------------------------
+           SELLO DE SEGURIDAD
+        ----------------------------------------------- */
+        .seguridad {
+            margin-top: 20px;
+            color: #999;
+            font-size: 12px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="contenedor">
+
+        <!-- ICONO Y TITULO (cambia según resultado) -->
+        <div class="icono" id="icono">⏳</div>
+        <h1 id="titulo">Procesando...</h1>
+        <p class="subtitulo" id="subtitulo">Por favor espera</p>
+
+        <!-- DETALLES DE LA TRANSACCION -->
+        <div class="detalles" id="detalles" style="display:none">
+            <h3>Detalles de la transacción</h3>
+
+            <div class="detalle-fila">
+                <span class="etiqueta">Monto</span>
+                <span class="valor" id="detalle-monto">-</span>
+            </div>
+
+            <div class="detalle-fila">
+                <span class="etiqueta">Código de autorización</span>
+                <span class="valor" id="detalle-authcode">-</span>
+            </div>
+
+            <div class="detalle-fila">
+                <span class="etiqueta">Número de referencia</span>
+                <span class="valor" id="detalle-referencia">-</span>
+            </div>
+
+            <div class="detalle-fila">
+                <span class="etiqueta">Tarjeta</span>
+                <span class="valor" id="detalle-tarjeta">-</span>
+            </div>
+
+            <div class="detalle-fila">
+                <span class="etiqueta">Fecha</span>
+                <span class="valor" id="detalle-fecha">-</span>
+            </div>
+
+        </div>
+
+        <!-- BOTONES -->
+        <button class="btn btn-principal" onclick="window.location.href='/'">
+            Realizar otro pago
+        </button>
+
+        <button class="btn btn-secundario" onclick="window.print()">
+            🖨️ Imprimir comprobante
+        </button>
+
+        <!-- SELLO -->
+        <div class="seguridad">
+            🔒 Pago procesado de forma segura por Datafast
+        </div>
+
+    </div>
+
+    <script>
+        // -----------------------------------------------
+        // Al cargar la página verificamos el pago
+        // -----------------------------------------------
+        window.onload = async function() {
+
+            // Datafast manda el resourcePath en la URL
+            // Ejemplo: /resultado?resourcePath=/v1/checkouts/ABC/payment
+            const urlParams = new URLSearchParams(window.location.search);
+            const resourcePath = urlParams.get('resourcePath');
+
+            // Si no hay resourcePath algo salió mal
+            if (!resourcePath) {
+                mostrarError('No se recibió información del pago');
+                return;
+            }
+
+            try {
+                // Le pedimos al servidor que verifique el pago
+                const respuesta = await fetch('/api/payment/verificar?' + 
+                    new URLSearchParams({ resourcePath }));
+                
+                const datos = await respuesta.json();
+
+                if (datos.ok) {
+                    mostrarAprobado(datos.datos);
+                } else {
+                    mostrarRechazado(datos.datos);
+                }
+
+            } catch (error) {
+                mostrarError('Error al verificar el pago');
+            }
+        };
+
+        // -----------------------------------------------
+        // MOSTRAR PAGO APROBADO
+        // -----------------------------------------------
+        function mostrarAprobado(datos) {
+            document.getElementById('icono').textContent = '✅';
+            document.getElementById('titulo').textContent = '¡Pago exitoso!';
+            document.getElementById('titulo').className = 'titulo-aprobado';
+            document.getElementById('subtitulo').textContent = 
+                'Tu pago fue procesado correctamente';
+
+            llenarDetalles(datos);
+        }
+
+        // -----------------------------------------------
+        // MOSTRAR PAGO RECHAZADO
+        // -----------------------------------------------
+        function mostrarRechazado(datos) {
+            document.getElementById('icono').textContent = '❌';
+            document.getElementById('titulo').textContent = 'Pago rechazado';
+            document.getElementById('titulo').className = 'titulo-rechazado';
+            document.getElementById('subtitulo').textContent = 
+                'Tu pago no pudo ser procesado. Intenta de nuevo.';
+
+            llenarDetalles(datos);
+        }
+
+        // -----------------------------------------------
+        // MOSTRAR ERROR
+        // -----------------------------------------------
+        function mostrarError(mensaje) {
+            document.getElementById('icono').textContent = '⚠️';
+            document.getElementById('titulo').textContent = 'Error';
+            document.getElementById('titulo').className = 'titulo-rechazado';
+            document.getElementById('subtitulo').textContent = mensaje;
+        }
+
+        // -----------------------------------------------
+        // LLENAR LOS DETALLES DE LA TRANSACCION
+        // -----------------------------------------------
+        function llenarDetalles(datos) {
+            if (!datos) return;
+
+            document.getElementById('detalles').style.display = 'block';
+
+            // Monto
+            document.getElementById('detalle-monto').textContent = 
+                `$${datos.amount} ${datos.currency}`;
+
+            // Código de autorización
+            document.getElementById('detalle-authcode').textContent = 
+                datos.resultDetails?.AuthCode || '-';
+
+            // Número de referencia
+            document.getElementById('detalle-referencia').textContent = 
+                datos.resultDetails?.ReferenceNbr || '-';
+
+            // Últimos 4 dígitos de la tarjeta
+            document.getElementById('detalle-tarjeta').textContent = 
+                datos.card ? `**** **** **** ${datos.card.last4Digits}` : '-';
+
+            // Fecha
+            const fecha = new Date(datos.timestamp);
+            document.getElementById('detalle-fecha').textContent = 
+                fecha.toLocaleDateString('es-EC', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+        }
+    </script>
+
+</body>
+</html>
