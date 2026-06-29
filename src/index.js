@@ -24,14 +24,18 @@ dotenv.config();
 //Con esta línea arrancamos el servidor con express
 const app = express(); 
 
-
-
+const cors = require('cors');
 
 /*
 Definimos el puerto en el que queremos que se abra para desplegar la web, la parte de "|| 3000" significa que si no encuentra
 un puerto declarado en el env use el 3000 por defecto
 */
 const PORT = process.env.PORT || 3000; 
+
+app.use(cors({
+    origin: 'https://business.fixgroup.net',
+    methods: ['GET', 'POST']
+}));
  
 
 /*--------------- TAREAS DE CONTROL (Se ejecutan en el orden que las escribamos y antes de ir a una ruta) -------------------*/
@@ -58,6 +62,8 @@ app.use(express.static(path.join( __dirname, '../public')));
 Cualquier url que empiece con api/payments lo enrutamos a ./routes/payments.js
 */
 app.use('/api/payment', paymentRoutes); 
+
+
 
 /*------------------------- RUTAS -------------------------*/
 
