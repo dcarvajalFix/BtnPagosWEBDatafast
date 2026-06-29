@@ -21,10 +21,24 @@ const paymentRoutes = require('./routes/payment');
 //Este nos sirve para traer todas las variables que creamos en el .env
 dotenv.config(); 
 
+const cors = require('cors');
+
+
 //Con esta línea arrancamos el servidor con express
 const app = express(); 
 
-const cors = require('cors');
+app.use((req, res, next) => {
+    res.header('Access-Control-Allow-Origin', 'https://business.fixgroup.net');
+    res.header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+    res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+    
+    // Responder inmediatamente a preflight
+    if (req.method === 'OPTIONS') {
+        return res.status(200).end();
+    }
+    next();
+});
+
 
 /*
 Definimos el puerto en el que queremos que se abra para desplegar la web, la parte de "|| 3000" significa que si no encuentra
@@ -32,10 +46,7 @@ un puerto declarado en el env use el 3000 por defecto
 */
 const PORT = process.env.PORT || 3000; 
 
-app.use(cors({
-    origin: 'https://business.fixgroup.net',
-    methods: ['GET', 'POST']
-}));
+
  
 
 /*--------------- TAREAS DE CONTROL (Se ejecutan en el orden que las escribamos y antes de ir a una ruta) -------------------*/
