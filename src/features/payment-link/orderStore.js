@@ -33,6 +33,12 @@ db.exec(`
     CREATE INDEX IF NOT EXISTS idx_orders_estado ON orders(estado);
 `);
 
+// Migración: quién creó el link (nombre de usuario, o 'api-key'). Las
+// órdenes anteriores quedan con NULL y siguen funcionando igual.
+if (!db.pragma('table_info(orders)').some((c) => c.name === 'creado_por')) {
+    db.exec('ALTER TABLE orders ADD COLUMN creado_por TEXT');
+}
+
 function generarOrderId() {
     return crypto.randomBytes(16).toString('hex');
 }
@@ -49,18 +55,19 @@ function filaAOrden(fila) {
         paymentId: fila.payment_id,
         creadoEn: fila.creado_en,
         expiraEn: fila.expira_en,
+        creadoPor: fila.creado_por || null,
     };
 }
 
-function crearOrden({ monto, moneda, descripcion }) {
+function crearOrden({ monto, moneda, descripcion, creadoPor = null }) {
     const orderId = generarOrderId();
     const ahora = Date.now();
     const expiraEn = ahora + config.orderTtlMinutes * 60 * 1000;
 
     db.prepare(`
-        INSERT INTO orders (order_id, monto, moneda, descripcion, estado, checkout_id, payment_id, creado_en, expira_en)
-        VALUES (?, ?, ?, ?, 'pendiente', NULL, NULL, ?, ?)
-    `).run(orderId, monto, moneda, descripcion || '', ahora, expiraEn);
+        INSERT INTO orders (order_id, monto, moneda, descripcion, estado, checkout_id, payment_id, creado_en, expira_en, creado_por)
+        VALUES (?, ?, ?, ?, 'pendiente', NULL, NULL, ?, ?, ?)
+    `).run(orderId, monto, moneda, descripcion || '', ahora, expiraEn, creadoPor);
 
     return filaAOrden(db.prepare('SELECT * FROM orders WHERE order_id = ?').get(orderId));
 }

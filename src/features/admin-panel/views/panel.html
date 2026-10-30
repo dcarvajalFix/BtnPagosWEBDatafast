@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex, nofollow">
+    <title>Transacciones - Panel FixGroup</title>
+    <link rel="stylesheet" href="/css/panel.css">
+</head>
+<body>
+    <div id="nav"></div>
+    <main>
+        <div class="tarjeta">
+            <h1>Transacciones</h1>
+            <div class="barra">
+                <label for="filtroEstado">Estado:</label>
+                <select id="filtroEstado">
+                    <option value="">Todos</option>
+                    <option value="pendiente">Pendiente</option>
+                    <option value="checkout_creado">Checkout creado</option>
+                    <option value="pagado">Pagado</option>
+                    <option value="rechazado">Rechazado</option>
+                    <option value="expirado">Expirado</option>
+                </select>
+                <a href="/panel/nuevo-link" class="boton-primario espacio">+ Generar link</a>
+            </div>
+
+            <div id="cargando" class="cargando">Cargando...</div>
+            <div id="vacio" class="vacio oculto">No hay transacciones con ese filtro.</div>
+
+            <div class="tabla-scroll">
+                <table id="tabla" class="oculto">
+                    <thead>
+                        <tr>
+                            <th>Fecha</th>
+                            <th>Descripción</th>
+                            <th>Monto</th>
+                            <th>Estado</th>
+                            <th>Creado por</th>
+                            <th>Order ID</th>
+                        </tr>
+                    </thead>
+                    <tbody id="cuerpoTabla"></tbody>
+                </table>
+            </div>
+
+            <div class="paginacion oculto" id="paginacion">
+                <button id="btnAnterior" type="button">← Anterior</button>
+                <span id="infoPagina"></span>
+                <button id="btnSiguiente" type="button">Siguiente →</button>
+            </div>
+        </div>
+    </main>
+    <script src="/js/comun.js"></script>
+    <script src="/js/panel.js"></script>
+</body>
+</html>

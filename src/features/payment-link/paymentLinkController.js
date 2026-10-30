@@ -10,16 +10,21 @@
 const datafastService = require('../../core/services/datafastService');
 const { verificarPagoSchema } = require('../../core/validators/paymentValidators');
 const orderStore = require('./orderStore');
+const { auditar } = require('../../shared/eventos');
 
 /**
- * [INTERNO - requiere API key]
+ * [INTERNO - sesión con permiso 'link:crear' o x-api-key]
  * Crea un link de pago con un monto fijo. Lo usa el equipo de FixGroup
- * desde la interfaz interna, nunca el cliente final.
+ * desde el panel (o una integración con API key), nunca el cliente final.
  */
 function crearLink(req, res) {
     const { monto, moneda, descripcion } = req.body;
 
-    const orden = orderStore.crearOrden({ monto, moneda, descripcion });
+    // req.actor lo pone el módulo de autenticación (usuario o API key). Si
+    // no existe, la orden queda sin creador y el flujo sigue igual.
+    const creadoPor = req.actor ? req.actor.nombre : null;
+    const orden = orderStore.crearOrden({ monto, moneda, descripcion, creadoPor });
+    auditar(req, 'link_creado', { orderId: orden.orderId, monto: orden.monto });
 
     const baseUrl = `${req.protocol}://${req.get('host')}`;
 
@@ -105,7 +110,7 @@ async function crearCheckout(req, res, next) {
             console.error('Datafast no devolvió checkoutId. Respuesta completa:', JSON.stringify(respuestaDatafast, null, 2));
             return res.status(502).json({ ok: false, mensaje: 'Datafast no devolvió un checkoutId válido' });
         }
-        
+
         orderStore.asociarCheckoutId(orderId, checkoutId);
 
         res.json({ ok: true, checkoutId });
@@ -164,7 +169,7 @@ async function verificarPago(req, res, next) {
 }
 
 /**
- * [INTERNO - requiere API key]
+ * [INTERNO - administrador (permiso 'pago:anular') o x-api-key]
  * Anula/reembolsa un pago ya procesado.
  */
 async function anularPago(req, res, next) {
@@ -173,6 +178,7 @@ async function anularPago(req, res, next) {
         const merchantTransactionId = `fixbtn_refund_${Date.now()}`;
 
         const resultado = await datafastService.anularPago({ paymentId, monto, merchantTransactionId });
+        auditar(req, 'pago_anulado', { paymentId, monto });
 
         res.json({ ok: true, mensaje: 'Pago anulado correctamente', datos: resultado });
     } catch (error) {

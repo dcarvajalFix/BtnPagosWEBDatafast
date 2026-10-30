@@ -4,17 +4,19 @@ const express = require('express');
 const path = require('path');
 const helmet = require('helmet');
 const cors = require('cors');
-const session = require('express-session');
 
 // Cargar/validar config PRIMERO. Si falta una variable obligatoria, el
 // proceso falla acá con un mensaje claro, en vez de arrancar "a medias".
 const config = require('./core/config/env');
 
 const errorHandler = require('./core/middleware/errorHandler');
-const paymentLinkRoutes = require('./features/payment-link/paymentLinkRoutes');
-const adminPanelRoutes = require('./features/admin-panel/adminPanelRoutes');
+const { crearBus } = require('./shared/eventos');
+const { montarModulos } = require('./modulos');
 
 const app = express();
+
+// Bus de eventos para que los módulos se comuniquen sin importarse entre sí.
+app.locals.eventos = crearBus();
 
 // Confiar en el proxy de Plesk/nginx para que req.ip sea la IP real del
 // cliente (Datafast exige customer.ip real, no la del servidor).
@@ -60,58 +62,14 @@ if (config.allowedOrigins.length > 0) {
 app.use(express.json({ limit: '50kb' }));
 app.use(express.urlencoded({ extended: true, limit: '50kb' }));
 
-/*
-  SESIÓN (panel de admin)
-  ------------------------
-  Cookie httpOnly (no accesible por JS, mitiga XSS robando la sesión),
-  'secure' en producción (solo viaja por HTTPS), sameSite 'lax' (mitiga
-  CSRF básico). El store por defecto es en memoria: si el proceso se
-  reinicia, las sesiones activas se cierran (el usuario simplemente
-  vuelve a hacer login, no es un problema de seguridad).
-*/
-app.use(
-    session({
-        name: 'fixbtn.sid',
-        secret: config.sessionSecret,
-        resave: false,
-        saveUninitialized: false,
-        cookie: {
-            httpOnly: true,
-            secure: config.isProduction,
-            sameSite: 'lax',
-            maxAge: 8 * 60 * 60 * 1000, // 8 horas
-        },
-    })
-);
-
 app.use(express.static(path.join(__dirname, '../public')));
 
-/*--------------- API ---------------*/
-app.use('/api/payment', paymentLinkRoutes);
-app.use('/api/admin', adminPanelRoutes);
-
-/*--------------- PÁGINAS ---------------*/
-
-// Página del checkout público: el orderId va en la URL, el monto se
-// resuelve del lado del servidor (ver /api/payment/orden/:orderId).
-app.get('/pagar/:orderId', (req, res) => {
-    res.sendFile(path.join(__dirname, '../public/checkout.html'));
-});
-
-app.get('/resultado/:orderId', (req, res) => {
-    res.sendFile(path.join(__dirname, '../public/resultado.html'));
-});
-
-app.get('/login', (req, res) => {
-    res.sendFile(path.join(__dirname, '../public/login.html'));
-});
-
-// El panel en sí es HTML público (sin datos sensibles adentro); todos
-// los datos reales los pide vía fetch a /api/admin/transacciones, que sí
-// exige sesión. Si no hay sesión, panel.js redirige a /login.
-app.get('/panel', (req, res) => {
-    res.sendFile(path.join(__dirname, '../public/panel.html'));
-});
+/*--------------- MÓDULOS ---------------
+  Cada feature se monta de forma independiente (ver src/modulos.js): si uno
+  falla al arrancar, se registra el error y los demás siguen funcionando.
+  Aquí se registran sus rutas de API y sus páginas.
+*/
+montarModulos(app);
 
 // Health check simple, útil para monitoreo en Plesk sin exponer nada sensible.
 app.get('/health', (req, res) => {

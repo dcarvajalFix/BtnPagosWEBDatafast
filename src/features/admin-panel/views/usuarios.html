@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex, nofollow">
+    <title>Usuarios - Panel FixGroup</title>
+    <link rel="stylesheet" href="/css/panel.css">
+</head>
+<body>
+    <div id="nav"></div>
+    <main>
+        <div class="tarjeta">
+            <h1>Crear usuario</h1>
+            <form id="formCrear" class="barra">
+                <div class="campo" style="margin:0;flex:1;min-width:220px">
+                    <label for="nuevoUsuario">Nombre de usuario</label>
+                    <input type="text" id="nuevoUsuario" required minlength="3" maxlength="32" autocapitalize="none" autocomplete="off" placeholder="ej: maria.lopez">
+                </div>
+                <button type="submit" class="primario" style="align-self:flex-end">Crear como Empleado</button>
+            </form>
+            <p class="ayuda">Se crea con una contraseña temporal y rol Empleado. Para hacerlo administrador usa "Cambiar rol" en la lista.</p>
+            <div id="mensajeCrear" class="mensaje oculto"></div>
+        </div>
+
+        <div class="tarjeta">
+            <h1>Usuarios</h1>
+            <div id="mensaje" class="mensaje oculto"></div>
+            <div id="cargando" class="cargando">Cargando...</div>
+            <div class="tabla-scroll">
+                <table id="tabla" class="oculto">
+                    <thead>
+                        <tr>
+                            <th>Usuario</th>
+                            <th>Rol</th>
+                            <th>Estado</th>
+                            <th>Último acceso</th>
+                            <th>Creado por</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="cuerpoTabla"></tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+
+    <dialog id="dialogo">
+        <h2 id="dlgTitulo"></h2>
+        <div id="dlgCuerpo"></div>
+        <div id="dlgError" class="mensaje error oculto"></div>
+        <div class="pie">
+            <button type="button" id="dlgCancelar" class="secundario">Cancelar</button>
+            <button type="button" id="dlgConfirmar" class="primario">Confirmar</button>
+        </div>
+    </dialog>
+
+    <script src="/js/comun.js"></script>
+    <script src="/js/usuarios.js"></script>
+</body>
+</html>

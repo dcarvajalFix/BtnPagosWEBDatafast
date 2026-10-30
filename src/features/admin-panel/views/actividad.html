@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex, nofollow">
+    <title>Actividad - Panel FixGroup</title>
+    <link rel="stylesheet" href="/css/panel.css">
+</head>
+<body>
+    <div id="nav"></div>
+    <main>
+        <div class="tarjeta">
+            <h1>Registro de actividad</h1>
+            <div id="cargando" class="cargando">Cargando...</div>
+            <div id="vacio" class="vacio oculto">Aún no hay actividad registrada.</div>
+            <div class="tabla-scroll">
+                <table id="tabla" class="oculto">
+                    <thead>
+                        <tr><th>Fecha</th><th>Usuario</th><th>Acción</th><th>Detalle</th><th>IP</th></tr>
+                    </thead>
+                    <tbody id="cuerpoTabla"></tbody>
+                </table>
+            </div>
+            <div class="paginacion oculto" id="paginacion">
+                <button id="btnAnterior" type="button">← Anterior</button>
+                <span id="infoPagina"></span>
+                <button id="btnSiguiente" type="button">Siguiente →</button>
+            </div>
+        </div>
+    </main>
+    <script src="/js/comun.js"></script>
+    <script src="/js/actividad.js"></script>
+</body>
+</html>

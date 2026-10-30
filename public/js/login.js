@@ -1,33 +1,38 @@
-document.getElementById('formLogin').addEventListener('submit', async (e) => {
-    e.preventDefault();
+(function () {
+    'use strict';
 
+    const form = document.getElementById('formLogin');
     const boton = document.getElementById('btnLogin');
-    const divError = document.getElementById('error');
-    divError.style.display = 'none';
-    boton.disabled = true;
+    const mensaje = document.getElementById('mensaje');
 
-    const username = document.getElementById('username').value.trim();
-    const password = document.getElementById('password').value;
+    form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        Panel.ocultar(mensaje);
+        boton.disabled = true;
 
-    try {
-        const respuesta = await fetch('/api/admin/login', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ username, password }),
-        });
+        try {
+            // Se usa fetch directo (no Panel.api) porque un 401 aquí significa
+            // "credenciales incorrectas", no "sesión vencida".
+            const respuesta = await fetch('/api/auth/login', {
+                method: 'POST',
+                credentials: 'same-origin',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    username: document.getElementById('username').value.trim(),
+                    password: document.getElementById('password').value,
+                }),
+            });
+            const datos = await respuesta.json().catch(() => ({}));
 
-        const datos = await respuesta.json();
-
-        if (datos.ok) {
-            window.location.href = '/panel';
-        } else {
-            divError.textContent = datos.mensaje || 'No se pudo iniciar sesión';
-            divError.style.display = 'block';
+            if (respuesta.ok && datos.ok) {
+                window.location.href = datos.debeCambiarPassword ? '/cuenta/password' : '/panel';
+                return;
+            }
+            Panel.mostrar(mensaje, 'error', datos.mensaje || 'No se pudo iniciar sesión');
+        } catch (_) {
+            Panel.mostrar(mensaje, 'error', 'Error de conexión');
+        } finally {
+            boton.disabled = false;
         }
-    } catch (error) {
-        divError.textContent = 'Error de conexión';
-        divError.style.display = 'block';
-    } finally {
-        boton.disabled = false;
-    }
-});
+    });
+})();
