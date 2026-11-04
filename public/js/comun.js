@@ -144,5 +144,53 @@
         return sesion;
     }
 
+        /* ------------------- Mostrar / ocultar contraseña (el "ojito") ------------------- */
+
+    const SVG_NS = 'http://www.w3.org/2000/svg';
+
+    function icono(visible) {
+        const svg = document.createElementNS(SVG_NS, 'svg');
+        svg.setAttribute('viewBox', '0 0 24 24');
+        svg.setAttribute('aria-hidden', 'true');
+        const rutas = visible
+            ? ['M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94', 'M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19', 'M1 1l22 22', 'M14.12 14.12a3 3 0 1 1-4.24-4.24']
+            : ['M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z', 'M12 9a3 3 0 1 0 0 6 3 3 0 0 0 0-6z'];
+        for (const d of rutas) {
+            const ruta = document.createElementNS(SVG_NS, 'path');
+            ruta.setAttribute('d', d);
+            svg.appendChild(ruta);
+        }
+        return svg;
+    }
+
+    /** Envuelve cada <input type="password"> y le agrega un botón para ver lo que se escribe. */
+    function agregarOjitos() {
+        document.querySelectorAll('input[type="password"]').forEach((input) => {
+            if (input.dataset.conOjo) return;
+            input.dataset.conOjo = '1';
+
+            const envoltura = el('span', { class: 'campo-password' });
+            input.parentNode.insertBefore(envoltura, input);
+            envoltura.appendChild(input);
+
+            const boton = el('button', { type: 'button', class: 'ojo', 'aria-label': 'Mostrar contraseña', title: 'Mostrar contraseña' });
+            boton.appendChild(icono(false));
+            boton.addEventListener('click', () => {
+                const mostrando = input.type === 'text';
+                input.type = mostrando ? 'password' : 'text';
+                boton.textContent = '';
+                boton.appendChild(icono(!mostrando));
+                const etiqueta = mostrando ? 'Mostrar contraseña' : 'Ocultar contraseña';
+                boton.setAttribute('aria-label', etiqueta);
+                boton.title = etiqueta;
+                input.focus();
+            });
+            envoltura.appendChild(boton);
+        });
+    }
+
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', agregarOjitos);
+    else agregarOjitos();
+
     window.Panel = { el, api, iniciar, formatearFecha, mostrar, ocultar, copiar };
 })();

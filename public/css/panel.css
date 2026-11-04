@@ -32,7 +32,7 @@ button:disabled { opacity: 0.5; cursor: not-allowed; }
 .mensaje { margin-top: 14px; padding: 12px; border-radius: 8px; font-size: 13px; word-break: break-word; }
 .mensaje.ok { background: #e8f5e9; color: #2e7d32; }
 .mensaje.error { background: #ffebee; color: #c62828; }
-.oculto { display: none; }
+.oculto { display: none !important; }
 
 .barra { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-bottom: 14px; }
 .barra select { padding: 8px; border-radius: 6px; border: 1px solid #ddd; font-size: 13px; }
@@ -77,3 +77,10 @@ dialog .pie { display: flex; justify-content: flex-end; gap: 10px; margin-top: 1
 .clave-temporal { font-family: monospace; font-size: 18px; letter-spacing: 1px; background: #fff; border: 1px dashed #bbb; padding: 10px; border-radius: 6px; margin: 8px 0; text-align: center; user-select: all; }
 
 .pagina-centrada { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 16px; }
+
+/* Campo de contraseña con botón para mostrar/ocultar */
+.campo-password { position: relative; display: block; }
+.campo-password input { padding-right: 44px; }
+.campo-password .ojo { position: absolute; top: 0; right: 0; height: 100%; width: 42px; display: flex; align-items: center; justify-content: center; background: transparent; border: none; cursor: pointer; color: #666; border-radius: 0 6px 6px 0; }
+.campo-password .ojo:hover { color: #1976d2; background: #f3f3f3; }
+.campo-password .ojo svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
