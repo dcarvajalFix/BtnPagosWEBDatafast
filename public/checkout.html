@@ -78,10 +78,12 @@
 
         .seguridad { text-align: center; margin-top: 20px; color: #999; font-size: 12px; }
         .seguridad span { margin: 0 5px; }
+        .enlaces-legales { text-align: center; font-size: 12px; margin-top: 12px; color: #999; }
+        .enlaces-legales a { color: #777; }
 
                 /* --- Celulares: campos apilados, 16px (evita el zoom de iOS), botones grandes --- */
         @media (max-width: 520px) {
-            body { align-items: flex-start; }
+            body { align-items: flex-start; }   
             .contenedor { padding: 20px 16px; border-radius: 0; box-shadow: none; min-height: 100vh; }
             .encabezado { margin-bottom: 20px; }
             .resumen { padding: 16px; }
@@ -92,7 +94,7 @@
             .btn-pagar { padding: 16px; }
             #formulario-datafast { max-width: 100%; }
         }
-        
+
     </style>
 </head>
 
@@ -160,16 +162,16 @@
 
         <div id="formulario-datafast"></div>
 
-        <div class="seguridad">
+                <div class="seguridad">
             <span>Pago seguro</span> | <span>SSL cifrado</span> | <span>PCI DSS</span>
         </div>
 
-    </div>
+        <p class="enlaces-legales">
+            <a href="/privacidad.html">Política de privacidad</a> ·
+            <a href="/terminos.html">Términos y condiciones</a>
+        </p>
 
-    <p style="text-align:center; font-size:0.85rem; margin-top:24px;">
-        <a href="/privacidad.html">Política de privacidad</a> ·
-        <a href="/terminos.html">Términos y condiciones</a>
-    </p>
+    </div>
 
     <script src="/js/checkout.js"></script>
 
