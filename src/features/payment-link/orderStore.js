@@ -39,6 +39,21 @@ if (!db.pragma('table_info(orders)').some((c) => c.name === 'creado_por')) {
     db.exec('ALTER TABLE orders ADD COLUMN creado_por TEXT');
 }
 
+// Migración: datos de la anulación (quién, cuándo, y la referencia/autorización
+// que devuelve Datafast, que el Test Script pide como "Referencia Anulación").
+const COLUMNAS_ANULACION = [
+    ['anulado_en', 'INTEGER'],
+    ['anulado_por', 'TEXT'],
+    ['anulacion_id', 'TEXT'],
+    ['anulacion_ref', 'TEXT'],
+    ['anulacion_auth', 'TEXT'],
+    ['anulacion_mtid', 'TEXT'],
+];
+const columnasExistentes = db.pragma('table_info(orders)').map((c) => c.name);
+for (const [nombre, tipo] of COLUMNAS_ANULACION) {
+    if (!columnasExistentes.includes(nombre)) db.exec(`ALTER TABLE orders ADD COLUMN ${nombre} ${tipo}`);
+}
+
 function generarOrderId() {
     return crypto.randomBytes(16).toString('hex');
 }
@@ -56,6 +71,12 @@ function filaAOrden(fila) {
         creadoEn: fila.creado_en,
         expiraEn: fila.expira_en,
         creadoPor: fila.creado_por || null,
+        anuladoEn: fila.anulado_en || null,
+        anuladoPor: fila.anulado_por || null,
+        anulacionId: fila.anulacion_id || null,
+        anulacionReferencia: fila.anulacion_ref || null,
+        anulacionAutorizacion: fila.anulacion_auth || null,
+        anulacionMtid: fila.anulacion_mtid || null,
     };
 }
 
@@ -94,10 +115,43 @@ function asociarCheckoutId(orderId, checkoutId) {
 }
 
 function marcarResultado(orderId, { estado, paymentId }) {
+    // Una orden anulada (o con anulación en curso) no vuelve a 'pagado' aunque
+    // el cliente recargue la página de resultado: Datafast sigue mostrando la
+    // compra original como aprobada.
     db.prepare(`
-        UPDATE orders SET estado = ?, payment_id = COALESCE(?, payment_id) WHERE order_id = ?
+        UPDATE orders SET estado = ?, payment_id = COALESCE(?, payment_id)
+        WHERE order_id = ? AND estado NOT IN ('anulando', 'anulado')
     `).run(estado, paymentId || null, orderId);
 
+    return obtenerOrden(orderId);
+}
+
+/**
+ * Paso 1 de una anulación: "reserva" la orden (pagado -> anulando) de forma
+ * atómica. Si dos administradores (o un doble clic) intentan anular a la vez,
+ * solo uno consigue la reserva y el otro recibe false.
+ */
+function reservarAnulacion(orderId, merchantTransactionId) {
+    const r = db.prepare(`
+        UPDATE orders SET estado = 'anulando', anulacion_mtid = ?
+        WHERE order_id = ? AND estado = 'pagado'
+    `).run(merchantTransactionId, orderId);
+    return r.changes === 1;
+}
+
+/** Datafast rechazó la anulación: la orden vuelve a 'pagado'. */
+function liberarAnulacion(orderId) {
+    db.prepare("UPDATE orders SET estado = 'pagado' WHERE order_id = ? AND estado = 'anulando'").run(orderId);
+    return obtenerOrden(orderId);
+}
+
+/** Datafast aprobó la anulación: se guarda quién, cuándo y la referencia. */
+function confirmarAnulacion(orderId, { por, anulacionId, referencia, autorizacion }) {
+    db.prepare(`
+        UPDATE orders SET estado = 'anulado', anulado_en = ?, anulado_por = ?,
+            anulacion_id = ?, anulacion_ref = ?, anulacion_auth = ?
+        WHERE order_id = ? AND estado = 'anulando'
+    `).run(Date.now(), por || null, anulacionId || null, referencia || null, autorizacion || null, orderId);
     return obtenerOrden(orderId);
 }
 
@@ -150,4 +204,7 @@ module.exports = {
     marcarResultado,
     buscarPorCheckoutId,
     listarOrdenes,
+    reservarAnulacion,
+    liberarAnulacion,
+    confirmarAnulacion,
 };

@@ -8,10 +8,10 @@
         Panel.ocultar($('mensaje'));
         $('resultado').classList.add('oculto');
         $('btnGenerar').disabled = true;
-
+        
         try {
             // Sin API key: la autorización es la sesión del usuario.
-            const datos = await Panel.api('/api/payment/crear-link', {
+            const datos = await Panel.api('/api/payment/crx|xear-link', {
                 method: 'POST',
                 body: { monto: $('monto').value, descripcion: $('descripcion').value },
             });

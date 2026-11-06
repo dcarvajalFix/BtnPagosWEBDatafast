@@ -18,6 +18,8 @@
         usuario_desactivado: 'Usuario desactivado',
         link_creado: 'Link de pago generado',
         pago_anulado: 'Pago anulado',
+        pago_anulacion_rechazada: 'Anulación rechazada por Datafast',
+        pago_anulacion_incierta: 'Anulación con resultado incierto',
     };
 
     function resumirDetalle(d) {

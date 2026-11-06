@@ -149,6 +149,10 @@ async function anularPago({ paymentId, monto, merchantTransactionId }) {
 
     const respuesta = await datafastClient.post(`/v1/payments/${paymentId}`, datos.toString(), {
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        // Datafast contesta los rechazos de anulación (ej. 700.400.200) con
+        // HTTP 4xx y un JSON con el motivo: lo leemos en vez de lanzar error.
+        // Un 5xx o una caída de red sí lanzan (resultado incierto).
+        validateStatus: (estado) => estado < 500,
     });
 
     return respuesta.data;

@@ -19,6 +19,8 @@
                     <option value="pendiente">Pendiente</option>
                     <option value="checkout_creado">Checkout creado</option>
                     <option value="pagado">Pagado</option>
+                    <option value="anulando">Anulando</option>
+                    <option value="anulado">Anulado</option>
                     <option value="rechazado">Rechazado</option>
                     <option value="expirado">Expirado</option>
                 </select>
@@ -38,6 +40,7 @@
                             <th>Estado</th>
                             <th>Creado por</th>
                             <th>Order ID</th>
+                            <th>Anulación</th>
                         </tr>
                     </thead>
                     <tbody id="cuerpoTabla"></tbody>
@@ -51,6 +54,16 @@
             </div>
         </div>
     </main>
+    <dialog id="dialogo">
+        <h2 id="dlgTitulo"></h2>
+        <div id="dlgCuerpo"></div>
+        <div id="dlgError" class="mensaje error oculto"></div>
+        <div class="pie">
+            <button type="button" id="dlgCancelar" class="secundario">Cancelar</button>
+            <button type="button" id="dlgConfirmar" class="primario">Confirmar</button>
+        </div>
+    </dialog>
+
     <script src="/js/comun.js"></script>
     <script src="/js/panel.js"></script>
 </body>

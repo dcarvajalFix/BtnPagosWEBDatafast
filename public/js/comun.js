@@ -7,6 +7,7 @@
 
     function el(tag, props, ...hijos) {
         const nodo = document.createElement(tag);
+        
         if (props) {
             for (const [clave, valor] of Object.entries(props)) {
                 if (valor === null || valor === undefined || valor === false) continue;
@@ -16,6 +17,7 @@
                 else nodo.setAttribute(clave, valor === true ? '' : valor);
             }
         }
+
         for (const hijo of hijos.flat()) {
             if (hijo === null || hijo === undefined || hijo === false) continue;
             nodo.appendChild(typeof hijo === 'string' ? document.createTextNode(hijo) : hijo);
@@ -45,10 +47,12 @@
             window.location.href = '/login';
             throw { mensaje: 'Sesión no válida', estado: 401 };
         }
+
         if (respuesta.status === 403 && datos.codigo === 'CAMBIAR_PASSWORD') {
             window.location.href = '/cuenta/password';
             throw { mensaje: 'Debes cambiar tu contraseña', estado: 403 };
         }
+
         if (!respuesta.ok || datos.ok === false) {
             let mensaje = datos.mensaje || 'No se pudo completar la acción';
             if (Array.isArray(datos.errores) && datos.errores.length) {
@@ -179,14 +183,14 @@
                 const mostrando = input.type === 'text';
                 input.type = mostrando ? 'password' : 'text';
                 boton.textContent = '';
-                boton.appendChild(icono(!mostrando));
+                boton.appendChild(icono(!mostrando));           
                 const etiqueta = mostrando ? 'Mostrar contraseña' : 'Ocultar contraseña';
                 boton.setAttribute('aria-label', etiqueta);
                 boton.title = etiqueta;
                 input.focus();
             });
-            envoltura.appendChild(boton);
-        });
+                envoltura.appendChild(boton);
+            });
     }
 
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', agregarOjitos);

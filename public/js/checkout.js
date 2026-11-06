@@ -5,6 +5,7 @@ const ORDER_ID = partesUrl[partesUrl.length - 1];
 
 let ORDEN = null;
 
+
 async function cargarOrden() {
     try {
         const respuesta = await fetch(`/api/payment/orden/${ORDER_ID}`);

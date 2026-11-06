@@ -53,8 +53,8 @@ function obtenerOrdenPublica(req, res) {
     if (orden.estado === 'expirado') {
         return res.status(410).json({ ok: false, mensaje: 'Este link de pago expiró' });
     }
-
-    if (orden.estado === 'pagado') {
+    
+    if (['pagado', 'anulando', 'anulado'].includes(orden.estado)) {
         return res.status(409).json({ ok: false, mensaje: 'Este link ya fue pagado' });
     }
 
@@ -168,23 +168,97 @@ async function verificarPago(req, res, next) {
     }
 }
 
+const MENSAJES_ANULACION = {
+    '700.400.200': 'Datafast indica que esta transacción ya fue anulada o que no admite más anulaciones.',
+    '700.300.700': 'Datafast rechazó el reverso: la transacción ya no puede anularse.',
+};
+
 /**
  * [INTERNO - administrador (permiso 'pago:anular') o x-api-key]
- * Anula/reembolsa un pago ya procesado.
+ * Anula un pago aprobado (Guía Datafast v3.2.2, sección 7: paymentType=RF
+ * sobre el id del pago). Siempre anula el monto completo de la orden.
+ *
+ * Flujo: reservar (pagado -> anulando) -> llamar a Datafast -> confirmar
+ * (anulado) o liberar (pagado). Si no se sabe qué pasó (timeout, error 5xx)
+ * la orden se queda en 'anulando' a propósito: reintentar a ciegas podría
+ * anular dos veces.
  */
+
 async function anularPago(req, res, next) {
     try {
-        const { paymentId, monto } = req.body;
-        const merchantTransactionId = `fixbtn_refund_${Date.now()}`;
+        const { orderId } = req.body;
+        const orden = orderStore.obtenerOrden(orderId);
 
-        const resultado = await datafastService.anularPago({ paymentId, monto, merchantTransactionId });
-        auditar(req, 'pago_anulado', { paymentId, monto });
-
-        res.json({ ok: true, mensaje: 'Pago anulado correctamente', datos: resultado });
-    } catch (error) {
-        if (error.codigo === 'PAYMENT_ID_INVALIDO') {
-            return res.status(400).json({ ok: false, mensaje: 'paymentId inválido' });
+        if (!orden) {
+            return res.status(404).json({ ok: false, mensaje: 'Orden no encontrada' });
         }
+        if (orden.estado === 'anulado') {
+            return res.status(409).json({ ok: false, mensaje: 'Este pago ya fue anulado' });
+        }
+        if (orden.estado === 'anulando') {
+            return res.status(409).json({ ok: false, mensaje: 'Ya hay una anulación en curso para este pago' });
+        }
+        if (orden.estado !== 'pagado' || !orden.paymentId) {
+            return res.status(409).json({ ok: false, mensaje: 'Solo se pueden anular pagos aprobados' });
+        }
+
+        const merchantTransactionId = `fixbtn_refund_${orden.orderId.slice(0, 12)}_${Date.now()}`;
+        if (!orderStore.reservarAnulacion(orderId, merchantTransactionId)) {
+            return res.status(409).json({ ok: false, mensaje: 'Ya hay una anulación en curso para este pago' });
+        }
+
+        let resultado;
+        try {
+            resultado = await datafastService.anularPago({
+                paymentId: orden.paymentId,
+                monto: orden.monto,
+                merchantTransactionId,
+            });
+        } catch (error) {
+            if (error.codigo === 'PAYMENT_ID_INVALIDO') {
+                orderStore.liberarAnulacion(orderId);
+                return res.status(400).json({ ok: false, mensaje: 'paymentId inválido' });
+            }
+            // Resultado incierto: no se libera. Queda en 'anulando' con su
+            // merchantTransactionId guardado para consultarlo en Datafast.
+            auditar(req, 'pago_anulacion_incierta', { orderId, merchantTransactionId });
+            return next(error);
+        }
+
+        const codigo = resultado && resultado.result && resultado.result.code;
+
+        if (!datafastService.pagoFueAprobado(resultado)) {
+            orderStore.liberarAnulacion(orderId);
+            auditar(req, 'pago_anulacion_rechazada', { orderId, codigo: codigo || 'sin-codigo' });
+            return res.status(422).json({
+                ok: false,
+                codigo: codigo || null,
+                mensaje: MENSAJES_ANULACION[codigo] || `Datafast rechazó la anulación (código ${codigo || 'desconocido'}).`,
+            });
+        }
+
+        const detalles = resultado.resultDetails || {};
+        const actualizada = orderStore.confirmarAnulacion(orderId, {
+            por: req.actor ? req.actor.nombre : null,
+            anulacionId: resultado.id,
+            referencia: detalles.ReferenceNbr,
+            autorizacion: detalles.AuthCode,
+        });
+
+        auditar(req, 'pago_anulado', {
+            orderId,
+            monto: orden.monto,
+            referencia: detalles.ReferenceNbr || null,
+            autorizacion: detalles.AuthCode || null,
+        });
+
+        res.json({
+            ok: true,
+            mensaje: 'Pago anulado correctamente',
+            referencia: actualizada.anulacionReferencia,
+            autorizacion: actualizada.anulacionAutorizacion,
+        });
+    } catch (error) {
         next(error);
     }
 }

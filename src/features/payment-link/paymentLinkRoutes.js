@@ -5,7 +5,7 @@
 
   Internas (sesión con permiso, o x-api-key para integraciones):
     POST /crear-link      -> genera el link con monto fijo
-    POST /anular          -> reembolsa un pago (solo administrador o API key)
+    POST /anular          -> anula un pago aprobado, body {orderId} (solo administrador o API key)
 
   Públicas (las usa quien recibe el link, sin autenticación):
     GET  /orden/:orderId  -> datos de la orden (monto, estado) para pintar el checkout
@@ -21,15 +21,15 @@ const {
     validar,
     crearLinkSchema,
     crearCheckoutSchema,
-    anularPagoSchema,
 } = require('../../core/validators/paymentValidators');
+const { anularOrdenSchema } = require('./anularSchema');
 
 function crearRouter({ autorizarCrearLink, autorizarAnular }) {
     const router = express.Router();
 
     // --- Endpoints internos ---
     router.post('/crear-link', limiteInterno, autorizarCrearLink, validar(crearLinkSchema), controller.crearLink);
-    router.post('/anular', limiteInterno, autorizarAnular, validar(anularPagoSchema), controller.anularPago);
+    router.post('/anular', limiteInterno, autorizarAnular, validar(anularOrdenSchema), controller.anularPago);
 
     // --- Endpoints públicos (quien recibe el link) ---
     router.get('/orden/:orderId', limitePago, controller.obtenerOrdenPublica);

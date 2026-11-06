@@ -1,4 +1,4 @@
-const ESTADOS_VALIDOS = ['pendiente', 'checkout_creado', 'pagado', 'rechazado', 'expirado'];
+const ESTADOS_VALIDOS = ['pendiente', 'checkout_creado', 'pagado', 'anulando', 'anulado', 'rechazado', 'expirado'];
 
 function listarTransacciones(req, res, next) {
     try {
