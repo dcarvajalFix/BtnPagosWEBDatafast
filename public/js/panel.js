@@ -121,6 +121,7 @@
             for (const o of datos.ordenes) {
                 cuerpo.appendChild(el('tr', null,
                     el('td', { text: formatearFecha(o.creadoEn) }),
+                    el('td', { text: formatearFecha(o.expiraEn) }),
                     el('td', { text: o.descripcion || '-' }),
                     el('td', { text: '$' + o.monto + ' ' + o.moneda }),
                     el('td', null, el('span', { class: 'badge badge-' + o.estado, text: o.estado })),

@@ -78,6 +78,21 @@
 
         .seguridad { text-align: center; margin-top: 20px; color: #999; font-size: 12px; }
         .seguridad span { margin: 0 5px; }
+
+                /* --- Celulares: campos apilados, 16px (evita el zoom de iOS), botones grandes --- */
+        @media (max-width: 520px) {
+            body { align-items: flex-start; }
+            .contenedor { padding: 20px 16px; border-radius: 0; box-shadow: none; min-height: 100vh; }
+            .encabezado { margin-bottom: 20px; }
+            .resumen { padding: 16px; }
+            .resumen-fila { gap: 12px; }
+            .resumen-fila span:last-child { text-align: right; word-break: break-word; }
+            .campo-fila { flex-direction: column; gap: 0; }
+            .campo input { font-size: 16px; padding: 12px; }
+            .btn-pagar { padding: 16px; }
+            #formulario-datafast { max-width: 100%; }
+        }
+        
     </style>
 </head>
 

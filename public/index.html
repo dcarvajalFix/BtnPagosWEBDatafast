@@ -3,13 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FIX Group - Pagos en línea</title>
+    <title>FIX GROUP</title>
     <link rel="stylesheet" href="/css/sitio.css">
 </head>
 <body>
     <header><a href="/">FIX Group</a></header>
 
-    <main>
+    <main class="inicio">
         <div class="tarjeta">
             <h1>Pagos en línea</h1>
             <p>
@@ -26,6 +26,26 @@
                 Teléfono: [TELEFONO_DE_CONTACTO]<br>
                 Quito, Ecuador
             </p>
+                    <!-- Acceso del personal de FIX Group -->
+        <section class="tarjeta acceso" id="acceso">
+            <h2>Acceso del personal</h2>
+            <form id="formLogin">
+                <div class="campo">
+                    <label for="username">Usuario</label>
+                    <input type="text" id="username" required autocomplete="username" autocapitalize="none">
+                </div>
+                <div class="campo">
+                    <label for="password">Contraseña</label>
+                    <input type="password" id="password" required autocomplete="current-password">
+                </div>
+                <button type="submit" id="btnLogin" class="primario">Iniciar sesión</button>
+            </form>
+            <div id="mensaje" class="mensaje oculto"></div>
+            <p class="legal">
+                Al ingresar aceptas nuestros <a href="/terminos.html">Términos y condiciones</a>
+                y la <a href="/privacidad.html">Política de privacidad</a>.
+            </p>
+        </section>
         </div>
     </main>
 
@@ -33,5 +53,8 @@
         <a href="/privacidad.html">Política de privacidad</a>
         <a href="/terminos.html">Términos y condiciones</a>
     </footer>
+    <script src="/js/comun.js"></script>
+    <script src="/js/login.js"></script>
+    <script src="/js/inicio.js"></script>
 </body>
 </html>

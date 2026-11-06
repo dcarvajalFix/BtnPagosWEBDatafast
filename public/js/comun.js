@@ -196,5 +196,29 @@
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', agregarOjitos);
     else agregarOjitos();
 
+        /* ------------- Tablas -> tarjetas en el celular (CSS usa data-label) ------------- */
+
+    function etiquetarTabla(tabla) {
+        const titulos = Array.from(tabla.querySelectorAll('thead th')).map((th) => th.textContent.trim());
+        const cuerpo = tabla.querySelector('tbody');
+        if (!cuerpo) return;
+        const aplicar = () => {
+            cuerpo.querySelectorAll('tr').forEach((tr) => {
+                Array.from(tr.children).forEach((td, i) => {
+                    if (!td.hasAttribute('data-label')) td.setAttribute('data-label', titulos[i] || '');
+                });
+            });
+        };
+        aplicar();
+        new MutationObserver(aplicar).observe(cuerpo, { childList: true });
+    }
+
+    function etiquetarTablas() {
+        document.querySelectorAll('table').forEach(etiquetarTabla);
+    }
+
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', etiquetarTablas);
+    else etiquetarTablas();
+
     window.Panel = { el, api, iniciar, formatearFecha, mostrar, ocultar, copiar };
 })();

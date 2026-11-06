@@ -20,3 +20,38 @@ footer a { color: #cfe3f7; margin: 0 8px; }
     padding: 24px;
     box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
 }
+
+/* ---------- Inicio: información + acceso del personal ---------- */
+.inicio { max-width: 980px; display: grid; grid-template-columns: 1fr 360px; gap: 24px; align-items: start; }
+.inicio .tarjeta { min-width: 0; }
+
+.acceso h2 { margin-top: 0; }
+.acceso .campo { margin-bottom: 14px; }
+.acceso label { display: block; font-size: 0.85rem; color: #52606d; margin-bottom: 4px; }
+.acceso input { width: 100%; padding: 11px 12px; border: 1px solid #cbd2d9; border-radius: 6px; font-size: 1rem; font-family: inherit; }
+.acceso button.primario, .acceso .boton-primario { width: 100%; padding: 12px; background: #1976d2; color: #fff; border: none; border-radius: 8px; font-size: 1rem; cursor: pointer; text-align: center; text-decoration: none; display: inline-block; }
+.acceso button.primario:disabled { background: #ccc; cursor: not-allowed; }
+.acceso .mensaje { margin-top: 14px; padding: 12px; border-radius: 8px; font-size: 0.9rem; word-break: break-word; }
+.acceso .mensaje.error { background: #ffebee; color: #c62828; }
+.acceso .oculto { display: none !important; }
+.acceso .legal { font-size: 0.8rem; color: #616e7c; margin: 14px 0 0; text-align: center; }
+.acceso .enlace-boton { background: none; border: none; color: #0b5fa5; text-decoration: underline; cursor: pointer; font-size: 0.9rem; padding: 0; }
+
+/* Botón para ver la contraseña (lo agrega /js/comun.js) */
+.campo-password { position: relative; display: block; }
+.campo-password input { padding-right: 46px; }
+.campo-password .ojo { position: absolute; top: 0; right: 0; height: 100%; width: 44px; display: flex; align-items: center; justify-content: center; background: transparent; border: none; cursor: pointer; color: #666; border-radius: 0 6px 6px 0; }
+.campo-password .ojo:hover { color: #1976d2; background: #f3f3f3; }
+.campo-password .ojo svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+
+/* ---------- Celulares y tablets ---------- */
+footer a { display: inline-block; padding: 6px 4px; }
+
+@media (max-width: 760px) {
+    .inicio { grid-template-columns: 1fr; padding: 20px 16px; gap: 16px; }
+    .inicio .acceso { order: -1; }   /* en el celular, el acceso queda arriba */
+    main { padding: 20px 16px; }
+    .tarjeta { padding: 18px; }
+    h1 { font-size: 1.5rem; }
+    .acceso input { font-size: 16px; }   /* evita el zoom automático de iOS */
+}

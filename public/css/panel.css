@@ -88,3 +88,56 @@ dialog .pie { display: flex; justify-content: flex-end; gap: 10px; margin-top: 1
 .campo-password .ojo svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 .detalle-anulacion { font-size: 12px; color: #555; line-height: 1.5; }
 .tabla-acciones button { white-space: nowrap; }
+
+/* ======================= Responsive (celulares y tablets) ======================= */
+@media (max-width: 720px) {
+    /* Navegación: marca arriba, enlaces en fila con scroll táctil, usuario abajo */
+    .nav { padding: 10px 12px; gap: 2px 14px; }
+    .nav .marca { width: 100%; margin: 0 0 2px; }
+    .nav a { padding: 10px 4px; }
+    .nav .derecha { width: 100%; margin-left: 0; justify-content: space-between; padding-top: 8px; margin-top: 4px; border-top: 1px solid #1d3a5c; }
+
+    main { margin: 12px auto; padding: 0 12px; }
+    .tarjeta { padding: 16px; border-radius: 8px; }
+    h1 { font-size: 19px; }
+
+    /* Campos y botones cómodos para el dedo. 16px evita el zoom automático de iOS. */
+    .campo input, .campo select, .barra select, .link-generado input { font-size: 16px; padding: 12px; }
+    .campo .campo-password input, .campo-password input { padding-right: 48px; }
+    .campo-password .ojo { width: 46px; }
+    button.primario, .boton-primario { padding: 13px 16px; font-size: 16px; }
+    button.secundario, button.peligro { padding: 10px 14px; font-size: 14px; }
+
+    .barra select { flex: 1; }
+    .barra .espacio { margin-left: 0; width: 100%; text-align: center; }
+
+    .paginacion { flex-wrap: wrap; }
+
+    /* Diálogos: botones a todo el ancho, el principal arriba */
+    dialog { padding: 18px; }
+    dialog .pie { flex-direction: column-reverse; }
+    dialog .pie button { width: 100%; padding: 12px; font-size: 15px; }
+
+    /* Tablas -> una tarjeta por fila (las etiquetas salen de data-label, ver comun.js) */
+    .tabla-scroll { overflow: visible; }
+    table, tbody, tr, td { display: block; width: 100%; }
+    thead { position: absolute; left: -9999px; top: -9999px; }
+    tr { border: 1px solid #e6e6e6; border-radius: 8px; margin-bottom: 12px; padding: 4px 12px; background: #fff; }
+    tr:hover td { background: transparent; }
+    td { display: flex; justify-content: space-between; align-items: flex-start; gap: 14px; text-align: right; padding: 9px 0; border-bottom: 1px solid #f3f3f3; word-break: break-word; }
+    td:last-child { border-bottom: none; }
+    td::before { content: attr(data-label); flex: 0 0 34%; max-width: 34%; text-align: left; font-weight: 600; font-size: 11px; color: #777; text-transform: uppercase; padding-top: 2px; }
+    td[data-label=""]::before { display: none; }
+    td { flex-wrap: wrap; row-gap: 6px; }
+    td .badge { margin-left: auto; white-space: normal; text-align: center; }
+    td.acciones, td.tabla-acciones { justify-content: flex-end; }
+    td.acciones::before { flex: 0 0 100%; max-width: 100%; }
+    td.tabla-acciones::before { margin-right: auto; }
+    td.acciones button { flex: 1 1 auto; }
+    .detalle-anulacion { text-align: right; }
+}
+
+@media (max-width: 380px) {
+    .tarjeta { padding: 14px; }
+    td::before { flex-basis: 40%; max-width: 40%; }
+}
