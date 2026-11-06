@@ -11,7 +11,7 @@
         
         try {
             // Sin API key: la autorización es la sesión del usuario.
-            const datos = await Panel.api('/api/payment/crx|xear-link', {
+            const datos = await Panel.api('/api/payment/crear-link', {
                 method: 'POST',
                 body: { monto: $('monto').value, descripcion: $('descripcion').value },
             });
