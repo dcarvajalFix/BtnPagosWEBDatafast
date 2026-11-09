@@ -10,6 +10,7 @@ const path = require('path');
 const express = require('express');
 const controller = require('./adminPanelController');
 const { limiteInterno } = require('../../core/middleware/rateLimit');
+const { limiteLectura } = require('./limites');
 
 const VISTAS = path.join(__dirname, 'views');
 
@@ -36,8 +37,7 @@ function montar(app) {
 
     // --- API ---
     const api = express.Router();
-    api.get('/transacciones', limiteInterno, auth.requirePermiso('transacciones:ver'), controller.listarTransacciones);
-
+        api.get('/transacciones', limiteLectura, auth.requirePermiso('transacciones:ver'), controller.listarTransacciones);
     if (app.locals.audit) {
         api.get('/actividad', limiteInterno, auth.requirePermiso('actividad:ver'), controller.listarActividad);
     }

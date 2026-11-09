@@ -24,6 +24,10 @@
                     <option value="rechazado">Rechazado</option>
                     <option value="expirado">Expirado</option>
                 </select>
+
+                <button type="button" id="btnActualizar" class="secundario">↻ Actualizar</button>
+                <label class="auto"><input type="checkbox" id="chkAuto" checked> Actualizar automáticamente</label>
+                <span id="ultimaActualizacion" class="ayuda"></span>    
                 <a href="/panel/nuevo-link" class="boton-primario espacio">+ Generar link</a>
             </div>
 
@@ -41,6 +45,7 @@
                             <th>Estado</th>
                             <th>Creado por</th>
                             <th>Order ID</th>
+                            <th>Link</th>
                             <th>Anulación</th>
                         </tr>
                     </thead>

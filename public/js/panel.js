@@ -68,9 +68,19 @@
                         el('div', { class: 'aviso-clave', text: 'Estos datos también quedan en la tabla de transacciones (columna Anulación).' })
                     ),
                 });
-                cargar();
+                cargar({ silencioso: true });
             },
         });
+    }
+
+    /** Enlace de pago para reenviarlo: solo mientras el cliente todavía pueda usarlo. */
+    function celdaLink(o) {
+        const vigente = ['pendiente', 'checkout_creado'].includes(o.estado) && o.expiraEn > Date.now();
+        if (!vigente) return el('td', { text: o.estado === 'expirado' ? 'Vencido' : '-' });
+        const url = window.location.origin + '/pagar/' + o.orderId;
+        return el('td', { class: 'tabla-acciones' },
+            el('button', { type: 'button', class: 'secundario', text: 'Copiar link', onclick: (e) => Panel.copiar(url, e.currentTarget) })
+        );
     }
 
     function celdaAnulacion(o) {
@@ -97,11 +107,32 @@
 
     /* ------------------------------ Tabla ------------------------------ */
 
-    async function cargar() {
-        $('cargando').classList.remove('oculto');
-        $('tabla').classList.add('oculto');
-        $('vacio').classList.add('oculto');
-        $('paginacion').classList.add('oculto');
+    let cargando = false;
+    let recarga = null;
+
+    function horaActual() {
+        return new Date().toLocaleTimeString('es-EC', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    }
+
+    /**
+     * silencioso = actualización automática: no muestra "Cargando...", no
+     * oculta la tabla y deja la pantalla como está (sin saltos).
+     */
+    async function cargar({ silencioso = false } = {}) {
+        // Si ya hay una carga en curso, se encola una más para cuando termine
+        // (así un cambio de filtro o un "Actualizar" nunca se pierde).
+        if (cargando) {
+            recarga = { silencioso: silencioso && (recarga ? recarga.silencioso : true) };
+            return;
+        }
+        cargando = true;
+
+        if (!silencioso) {
+            $('cargando').classList.remove('oculto');
+            $('tabla').classList.add('oculto');
+            $('vacio').classList.add('oculto');
+            $('paginacion').classList.add('oculto');
+        }
 
         const estado = $('filtroEstado').value;
         const params = new URLSearchParams({ pagina, porPagina: 25 });
@@ -110,26 +141,28 @@
         try {
             const datos = await api('/api/admin/transacciones?' + params);
             $('cargando').classList.add('oculto');
+            $('ultimaActualizacion').textContent = 'Actualizado ' + horaActual();
 
             if (datos.ordenes.length === 0) {
                 $('vacio').classList.remove('oculto');
+                $('tabla').classList.add('oculto');
+                $('paginacion').classList.add('oculto');
                 return;
             }
+            $('vacio').classList.add('oculto');
 
-            const cuerpo = $('cuerpoTabla');
-            cuerpo.textContent = '';
-            for (const o of datos.ordenes) {
-                cuerpo.appendChild(el('tr', null,
-                    el('td', { text: formatearFecha(o.creadoEn) }),
-                    el('td', { text: formatearFecha(o.expiraEn) }),
-                    el('td', { text: o.descripcion || '-' }),
-                    el('td', { text: '$' + o.monto + ' ' + o.moneda }),
-                    el('td', null, el('span', { class: 'badge badge-' + o.estado, text: o.estado })),
-                    el('td', { text: o.creadoPor || '-' }),
-                    el('td', null, el('code', { text: o.orderId })),
-                    celdaAnulacion(o)
-                ));
-            }
+            const filas = datos.ordenes.map((o) => el('tr', null,
+                el('td', { text: formatearFecha(o.creadoEn) }),
+                el('td', { text: formatearFecha(o.expiraEn) }),
+                el('td', { text: o.descripcion || '-' }),
+                el('td', { text: '$' + o.monto + ' ' + o.moneda }),
+                el('td', null, el('span', { class: 'badge badge-' + o.estado, text: o.estado })),
+                el('td', { text: o.creadoPor || '-' }),
+                el('td', null, el('code', { text: o.orderId })),
+                celdaLink(o),
+                celdaAnulacion(o)
+            ));
+            $('cuerpoTabla').replaceChildren(...filas);
 
             $('infoPagina').textContent = 'Página ' + datos.pagina + ' de ' + datos.totalPaginas + ' (' + datos.total + ' en total)';
             $('btnAnterior').disabled = datos.pagina <= 1;
@@ -137,15 +170,53 @@
             $('tabla').classList.remove('oculto');
             $('paginacion').classList.remove('oculto');
         } catch (err) {
-            $('cargando').textContent = err.mensaje || 'Error al cargar transacciones.';
+            if (silencioso) $('ultimaActualizacion').textContent = 'Sin conexión, reintentando...';
+            else $('cargando').textContent = err.mensaje || 'Error al cargar transacciones.';
+        } finally {
+            cargando = false;
+            if (recarga) {
+                const siguiente = recarga;
+                recarga = null;
+                cargar(siguiente);
+            }
         }
     }
+
+    /* ------------------------------ Actualización automática ------------------------------ */
+
+    const INTERVALO_MS = 20000;
+    let temporizador = null;
+
+    function leerPreferencia() {
+        try { return localStorage.getItem('panelAuto') !== '0'; } catch (_) { return true; }
+    }
+
+    function guardarPreferencia(valor) {
+        try { localStorage.setItem('panelAuto', valor ? '1' : '0'); } catch (_) { /* sin almacenamiento */ }
+    }
+
+    function tick() {
+        // No se refresca si la pestaña está oculta o hay un diálogo abierto (para no pisar lo que se está haciendo).
+        if (document.hidden || dialogo.open) return;
+        cargar({ silencioso: true });
+    }
+
+    function aplicarAuto() {
+        clearInterval(temporizador);
+        temporizador = $('chkAuto').checked ? setInterval(tick, INTERVALO_MS) : null;
+    }
+
+    $('chkAuto').checked = leerPreferencia();
+    $('chkAuto').addEventListener('change', () => { guardarPreferencia($('chkAuto').checked); aplicarAuto(); });
+    $('btnActualizar').addEventListener('click', () => cargar({ silencioso: true }));
+    // Al volver a la pestaña se actualiza enseguida.
+    document.addEventListener('visibilitychange', () => { if (!document.hidden && $('chkAuto').checked) tick(); });
 
     $('filtroEstado').addEventListener('change', () => { pagina = 1; cargar(); });
     $('btnAnterior').addEventListener('click', () => { if (pagina > 1) { pagina -= 1; cargar(); } });
     $('btnSiguiente').addEventListener('click', () => { pagina += 1; cargar(); });
 
     Panel.iniciar({ permiso: 'transacciones:ver' })
-        .then((sesion) => { puedeAnular = sesion.permisos.includes('pago:anular'); return cargar(); })
+        .then((sesion) => { puedeAnular = sesion.permisos.includes('pago:anular'); aplicarAuto(); return cargar(); })
         .catch(() => {});
 })();

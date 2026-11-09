@@ -33,6 +33,8 @@ db.exec(`
     CREATE INDEX IF NOT EXISTS idx_orders_estado ON orders(estado);
 `);
 
+
+
 // Migración: quién creó el link (nombre de usuario, o 'api-key'). Las
 // órdenes anteriores quedan con NULL y siguen funcionando igual.
 if (!db.pragma('table_info(orders)').some((c) => c.name === 'creado_por')) {
@@ -80,10 +82,11 @@ function filaAOrden(fila) {
     };
 }
 
-function crearOrden({ monto, moneda, descripcion, creadoPor = null }) {
+function crearOrden({ monto, moneda, descripcion, creadoPor = null, ttlMinutos = null }) {
     const orderId = generarOrderId();
     const ahora = Date.now();
-    const expiraEn = ahora + config.orderTtlMinutes * 60 * 1000;
+    // Si quien crea el link no elige caducidad, se usa la del sistema (ORDER_TTL_MINUTES).
+    const expiraEn = ahora + (ttlMinutos || config.orderTtlMinutes) * 60 * 1000;
 
     db.prepare(`
         INSERT INTO orders (order_id, monto, moneda, descripcion, estado, checkout_id, payment_id, creado_en, expira_en, creado_por)

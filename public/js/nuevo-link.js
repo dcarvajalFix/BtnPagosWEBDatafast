@@ -11,10 +11,10 @@
         
         try {
             // Sin API key: la autorización es la sesión del usuario.
-            const datos = await Panel.api('/api/payment/crear-link', {
-                method: 'POST',
-                body: { monto: $('monto').value, descripcion: $('descripcion').value },
-            });
+            const cuerpo = { monto: $('monto').value, descripcion: $('descripcion').value };
+            if ($('caducidad').value) cuerpo.ttlMinutos = parseInt($('caducidad').value, 10);
+
+            const datos = await Panel.api('/api/payment/crear-link', { method: 'POST', body: cuerpo });
 
             $('textoExpira').textContent = 'Link generado. Expira: ' + new Date(datos.expiraEn).toLocaleString('es-EC');
             $('linkGenerado').value = datos.link;

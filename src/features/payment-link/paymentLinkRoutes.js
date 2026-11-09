@@ -4,7 +4,7 @@
   Se montan bajo /api/payment (ver index.js del módulo).
 
   Internas (sesión con permiso, o x-api-key para integraciones):
-    POST /crear-link      -> genera el link con monto fijo
+    POST /crear-link      -> genera el link con monto fijo (y caducidad opcional)
     POST /anular          -> anula un pago aprobado, body {orderId} (solo administrador o API key)
 
   Públicas (las usa quien recibe el link, sin autenticación):
@@ -19,16 +19,16 @@ const controller = require('./paymentLinkController');
 const { limitePago, limiteInterno } = require('../../core/middleware/rateLimit');
 const {
     validar,
-    crearLinkSchema,
     crearCheckoutSchema,
 } = require('../../core/validators/paymentValidators');
 const { anularOrdenSchema } = require('./anularSchema');
+const { crearLinkConCaducidadSchema } = require('./crearLinkSchema');
 
 function crearRouter({ autorizarCrearLink, autorizarAnular }) {
     const router = express.Router();
 
     // --- Endpoints internos ---
-    router.post('/crear-link', limiteInterno, autorizarCrearLink, validar(crearLinkSchema), controller.crearLink);
+    router.post('/crear-link', limiteInterno, autorizarCrearLink, validar(crearLinkConCaducidadSchema), controller.crearLink);
     router.post('/anular', limiteInterno, autorizarAnular, validar(anularOrdenSchema), controller.anularPago);
 
     // --- Endpoints públicos (quien recibe el link) ---

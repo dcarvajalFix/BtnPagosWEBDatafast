@@ -18,13 +18,32 @@ const { auditar } = require('../../shared/eventos');
  * desde el panel (o una integración con API key), nunca el cliente final.
  */
 function crearLink(req, res) {
-    const { monto, moneda, descripcion } = req.body;
+    const { monto, moneda, descripcion, ttlMinutos } = req.body;
 
     // req.actor lo pone el módulo de autenticación (usuario o API key). Si
     // no existe, la orden queda sin creador y el flujo sigue igual.
     const creadoPor = req.actor ? req.actor.nombre : null;
-    const orden = orderStore.crearOrden({ monto, moneda, descripcion, creadoPor });
-    auditar(req, 'link_creado', { orderId: orden.orderId, monto: orden.monto });
+    const orden = orderStore.crearOrden({ monto, moneda, descripcion, creadoPor, ttlMinutos });
+    auditar(req, 'link_creado', { orderId: orden.orderId, monto: orden.monto, ttlMinutos: ttlMinutos || null });
+
+    const baseUrl = `${req.protocol}://${req.get('host')}`;
+
+    res.status(201).json({
+        ok: true,
+        orderId: orden.orderId,
+        link: `${baseUrl}/pagar/${orden.orderId}`,
+        monto: orden.monto,
+        moneda: orden.moneda,
+        expiraEn: new Date(orden.expiraEn).toISOString(),
+    });
+}function crearLink(req, res) {
+    const { monto, moneda, descripcion, ttlMinutos } = req.body;
+
+    // req.actor lo pone el módulo de autenticación (usuario o API key). Si
+    // no existe, la orden queda sin creador y el flujo sigue igual.
+    const creadoPor = req.actor ? req.actor.nombre : null;
+    const orden = orderStore.crearOrden({ monto, moneda, descripcion, creadoPor, ttlMinutos });
+    auditar(req, 'link_creado', { orderId: orden.orderId, monto: orden.monto, ttlMinutos: ttlMinutos || null });
 
     const baseUrl = `${req.protocol}://${req.get('host')}`;
 
