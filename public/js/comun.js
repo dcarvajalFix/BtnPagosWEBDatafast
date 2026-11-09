@@ -96,6 +96,7 @@
         { href: '/panel/nuevo-link', texto: 'Generar link', permiso: 'link:crear' },
         { href: '/panel/usuarios', texto: 'Usuarios', permiso: 'usuarios:gestionar' },
         { href: '/panel/actividad', texto: 'Actividad', permiso: 'actividad:ver' },
+        { href: '/cuenta/sesiones', texto: 'Mis sesiones', permiso: 'cuenta:sesiones' },
         { href: '/cuenta/password', texto: 'Mi contraseña', permiso: 'cuenta:password' },
     ];
 

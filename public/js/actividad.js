@@ -16,6 +16,8 @@
         usuario_rol: 'Cambio de rol',
         usuario_activado: 'Usuario activado',
         usuario_desactivado: 'Usuario desactivado',
+        sesion_cerrada: 'Sesión cerrada a distancia',
+        sesiones_cerradas: 'Varias sesiones cerradas',
         link_creado: 'Link de pago generado',
         pago_anulado: 'Pago anulado',
         pago_anulacion_rechazada: 'Anulación rechazada por Datafast',

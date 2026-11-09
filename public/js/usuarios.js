@@ -85,6 +85,9 @@
             el('td', { text: u.creadoPor || '-' }),
             el('td', { class: 'acciones' },
                 botonAccion('Cambiar rol', 'secundario', () => dialogoCambiarRol(u), esYo, motivoYo),
+
+                botonAccion('Sesiones', 'secundario', () => dialogoSesiones(u), false, ''),
+
                 botonAccion('Resetear contraseña', 'secundario', () => dialogoResetear(u), esYo, motivoYo),
                 u.activo
                     ? botonAccion('Desactivar', 'peligro', () => dialogoActivo(u, false), esYo, motivoYo)
@@ -168,6 +171,69 @@
             },
         });
         pintarPrevia();
+    }
+
+        /* ------------------------------ Sesiones abiertas de un usuario ------------------------------ */
+
+    function dialogoSesiones(usuario) {
+        const lista = el('div', { class: 'lista-sesiones' }, el('p', { class: 'ayuda', text: 'Cargando...' }));
+        const aviso = el('div', { class: 'mensaje oculto' });
+        const cerrarTodas = el('button', { type: 'button', class: 'peligro', text: 'Cerrar todas', disabled: true });
+
+        async function pintar() {
+            try {
+                const datos = await api('/api/usuarios/' + usuario.id + '/sesiones');
+                lista.textContent = '';
+                if (datos.sesiones.length === 0) {
+                    lista.appendChild(el('p', { class: 'ayuda', text: 'No tiene sesiones abiertas.' }));
+                }
+                for (const s of datos.sesiones) {
+                    lista.appendChild(el('div', { class: 'fila-sesion' },
+                        el('div', null,
+                            el('strong', { text: s.navegador }),
+                            s.actual ? [' ', el('span', { class: 'badge badge-activo', text: 'Tu sesión actual' })] : null,
+                            el('p', { class: 'ayuda', text: 'IP ' + s.ip + ' · Última actividad: ' + formatearFecha(s.ultimoUso) })
+                        ),
+                        s.actual ? null : el('button', {
+                            type: 'button', class: 'peligro', text: 'Cerrar',
+                            onclick: async () => {
+                                try {
+                                    await api('/api/usuarios/' + usuario.id + '/sesiones/' + s.id, { method: 'DELETE' });
+                                    await pintar();
+                                } catch (err) {
+                                    if (err.estado !== 401) Panel.mostrar(aviso, 'error', err.mensaje);
+                                }
+                            },
+                        })
+                    ));
+                }
+                cerrarTodas.disabled = datos.sesiones.filter((s) => !s.actual).length === 0;
+            } catch (err) {
+                if (err.estado !== 401) Panel.mostrar(aviso, 'error', err.mensaje);
+            }
+        }
+
+        cerrarTodas.addEventListener('click', async () => {
+            Panel.ocultar(aviso);
+            cerrarTodas.disabled = true;
+            try {
+                const r = await api('/api/usuarios/' + usuario.id + '/sesiones/cerrar-todas', { method: 'POST', body: {} });
+                Panel.mostrar(aviso, 'ok', r.cantidad === 1 ? 'Se cerró 1 sesión.' : 'Se cerraron ' + r.cantidad + ' sesiones.');
+                await pintar();
+            } catch (err) {
+                if (err.estado !== 401) Panel.mostrar(aviso, 'error', err.mensaje);
+            }
+        });
+
+        abrirDialogo({
+            titulo: 'Sesiones de ' + usuario.username,
+            soloCerrar: true,
+            cuerpo: el('div', null,
+                el('p', { class: 'ayuda', text: 'Cerrar una sesión saca a la persona de ese navegador de inmediato; tendrá que iniciar sesión otra vez.' }),
+                lista, aviso, el('div', { class: 'barra' }, cerrarTodas)
+            ),
+        });
+        pintar();
     }
 
     /* ------------------------------ Resetear contraseña ------------------------------ */

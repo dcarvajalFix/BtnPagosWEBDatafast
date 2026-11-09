@@ -3,6 +3,7 @@ const authService = require('./authService');
 const userStore = require('./userStore');
 const { ROLES, permisosDe } = require('./permisos');
 const { auditar } = require('../../shared/eventos');
+const { describirDispositivo } = require('./dispositivo');
 
 const loginSchema = z.object({
     username: z.string().trim().min(1).max(64),
@@ -43,6 +44,8 @@ async function login(req, res, next) {
         req.session.regenerate((err) => {
             if (err) return next(err);
             req.session.userId = usuario.id;
+// Datos para la lista "Mis sesiones" (solo navegador/sistema e IP, nunca el modelo del equipo).
+            req.session.meta = { ip: req.ip, navegador: describirDispositivo(req.get('user-agent')) };
             req.session.save((errGuardar) => {
                 if (errGuardar) return next(errGuardar);
                 userStore.registrarLogin(usuario.id);
@@ -94,7 +97,9 @@ async function cambiarPassword(req, res, next) {
         }
 
         userStore.establecerPassword(req.usuario.id, await authService.hashear(passwordNueva), false);
-        auditar(req, 'password_cambiada');
+// Si alguien más tenía la cuenta abierta, al cambiar la clave se cierra todo menos esta sesión.
+        const cerradas = req.app.locals.auth.sesiones.cerrarOtras(req.usuario.id, req.sessionID);
+        auditar(req, 'password_cambiada', { sesionesCerradas: cerradas });
         res.json({ ok: true, mensaje: 'Contraseña actualizada' });
     } catch (error) {
         next(error);

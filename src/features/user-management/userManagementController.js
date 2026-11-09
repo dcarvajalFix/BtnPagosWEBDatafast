@@ -116,9 +116,14 @@ function cambiarActivo(req, res) {
     const resultado = usuarios.cambiarActivo(id, parsed.data.activo);
     if (!resultado.ok) return respuestaDeError(res, resultado.codigo);
 
+    // Al desactivar, además de bloquear el acceso se cierran sus sesiones abiertas.
+    const sesionesCerradas = parsed.data.activo ? 0 : req.app.locals.auth.sesiones.cerrarTodas(id);
+
     auditar(req, parsed.data.activo ? 'usuario_activado' : 'usuario_desactivado', {
         usuario: resultado.usuario.username,
+        sesionesCerradas,
     });
+
     res.json({ ok: true, usuario: publico(resultado.usuario) });
 }
 
@@ -138,7 +143,10 @@ async function resetearPassword(req, res, next) {
         const passwordTemporal = servicio.generarPasswordTemporal();
         usuarios.establecerPassword(id, await servicio.hashear(passwordTemporal), true);
 
-        auditar(req, 'password_reseteada', { usuario: objetivo.username });
+        // La clave anterior deja de valer: cualquier sesión abierta con ella se cierra.
+        const sesionesCerradas = req.app.locals.auth.sesiones.cerrarTodas(id);
+        auditar(req, 'password_reseteada', { usuario: objetivo.username, sesionesCerradas });
+
         res.json({ ok: true, usuario: objetivo.username, passwordTemporal });
     } catch (error) {
         next(error);
@@ -156,4 +164,52 @@ function respuestaDeError(res, codigo) {
     return res.status(400).json({ ok: false, mensaje: 'No se pudo completar la acción' });
 }
 
-module.exports = { listar, catalogoRoles, crear, cambiarRol, cambiarActivo, resetearPassword };
+/** Sesiones abiertas de otro usuario (para el administrador). */
+function listarSesiones(req, res) {
+    const { usuarios, sesiones } = req.app.locals.auth;
+    const id = idDeParams(req);
+    if (!id) return res.status(400).json({ ok: false, mensaje: 'Datos inválidos' });
+    const objetivo = usuarios.obtenerPorId(id);
+    if (!objetivo) return respuestaDeError(res, 'NO_EXISTE');
+
+    res.json({
+        ok: true,
+        usuario: objetivo.username,
+        sesiones: sesiones.listarDeUsuario(id, id === req.usuario.id ? req.sessionID : null),
+    });
+}
+
+function cerrarSesion(req, res) {
+    const { usuarios, sesiones } = req.app.locals.auth;
+    const id = idDeParams(req);
+    if (!id) return res.status(400).json({ ok: false, mensaje: 'Datos inválidos' });
+    const objetivo = usuarios.obtenerPorId(id);
+    if (!objetivo) return respuestaDeError(res, 'NO_EXISTE');
+
+    if (id === req.usuario.id && sesiones.idPublico(req.sessionID) === req.params.sid) {
+        return res.status(400).json({ ok: false, mensaje: 'Esa es tu sesión actual. Usa "Cerrar sesión" para salir.' });
+    }
+    if (!sesiones.cerrar(id, req.params.sid)) {
+        return res.status(404).json({ ok: false, mensaje: 'Esa sesión ya no existe' });
+    }
+    auditar(req, 'sesion_cerrada', { usuario: objetivo.username, por: 'administrador' });
+    res.json({ ok: true });
+}
+
+function cerrarTodasLasSesiones(req, res) {
+    const { usuarios, sesiones } = req.app.locals.auth;
+    const id = idDeParams(req);
+    if (!id) return res.status(400).json({ ok: false, mensaje: 'Datos inválidos' });
+    const objetivo = usuarios.obtenerPorId(id);
+    if (!objetivo) return respuestaDeError(res, 'NO_EXISTE');
+
+    // Sobre uno mismo se conserva la sesión actual para no sacar al administrador de su propio panel.
+    const cantidad = id === req.usuario.id ? sesiones.cerrarOtras(id, req.sessionID) : sesiones.cerrarTodas(id);
+    auditar(req, 'sesiones_cerradas', { usuario: objetivo.username, cantidad, por: 'administrador' });
+    res.json({ ok: true, cantidad });
+}
+
+module.exports = {
+    listar, catalogoRoles, crear, cambiarRol, cambiarActivo, resetearPassword,
+    listarSesiones, cerrarSesion, cerrarTodasLasSesiones,
+};

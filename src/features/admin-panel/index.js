@@ -30,6 +30,7 @@ function montar(app) {
     app.get('/panel/nuevo-link', auth.paginaProtegida({ permiso: 'link:crear' }), enviar('nuevo-link.html'));
     app.get('/panel/usuarios', auth.paginaProtegida({ permiso: 'usuarios:gestionar' }), enviar('usuarios.html'));
     app.get('/panel/actividad', auth.paginaProtegida({ permiso: 'actividad:ver' }), enviar('actividad.html'));
+    app.get('/cuenta/sesiones', auth.paginaProtegida({ permiso: 'cuenta:sesiones' }), enviar('cuenta-sesiones.html'));
     app.get('/cuenta/password', auth.paginaProtegida({ permitirCambioPendiente: true }), enviar('cuenta-password.html'));
 
     // La URL antigua del generador ya no existe como archivo público.

@@ -15,6 +15,9 @@ function crearRouter(auth) {
     router.patch('/:id/rol', rol, controller.cambiarRol);
     router.patch('/:id/activo', gestionar, controller.cambiarActivo);
     router.post('/:id/reset-password', gestionar, controller.resetearPassword);
+    router.get('/:id/sesiones', gestionar, controller.listarSesiones);
+    router.post('/:id/sesiones/cerrar-todas', gestionar, controller.cerrarTodasLasSesiones);
+    router.delete('/:id/sesiones/:sid', gestionar, controller.cerrarSesion);
 
     return router;
 }

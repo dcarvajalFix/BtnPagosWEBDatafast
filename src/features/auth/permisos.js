@@ -8,6 +8,7 @@
 
 const PERMISOS = {
     'cuenta:password': 'Cambiar su propia contraseña',
+    'cuenta:sesiones': 'Ver y cerrar sus propias sesiones abiertas',
     'link:crear': 'Generar links de pago',
     'transacciones:ver': 'Ver todas las transacciones',
     'pago:anular': 'Anular / reembolsar pagos',
@@ -16,7 +17,7 @@ const PERMISOS = {
     'actividad:ver': 'Ver el registro de actividad del sistema',
 };
 
-const PERMISOS_EMPLEADO = ['cuenta:password', 'link:crear', 'transacciones:ver'];
+const PERMISOS_EMPLEADO = ['cuenta:password', 'cuenta:sesiones', 'link:crear', 'transacciones:ver'];
 
 const ROLES = {
     empleado: {

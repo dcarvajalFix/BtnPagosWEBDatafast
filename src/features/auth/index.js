@@ -13,17 +13,21 @@ const userStore = require('./userStore');
 const permisos = require('./permisos');
 const middleware = require('./middleware');
 const authRoutes = require('./authRoutes');
+const { SqliteSessionStore } = require('./sessionStore');
 
 function montar(app) {
     /*
       Cookie httpOnly (no accesible por JS), 'secure' en producción (solo
-      HTTPS) y sameSite 'lax' (mitiga CSRF). El store por defecto es en
-      memoria: si el proceso se reinicia, las sesiones se cierran y el
-      usuario vuelve a iniciar sesión.
+      HTTPS) y sameSite 'lax' (mitiga CSRF). Las sesiones se guardan en
+      SQLite (no en memoria): sobreviven a reinicios y despliegues, y se
+      pueden listar y cerrar desde el panel.
     */
+    const sesiones = new SqliteSessionStore({ ttlMs: 8 * 60 * 60 * 1000 });
+
     app.use(
         session({
             name: 'fixbtn.sid',
+            store: sesiones,
             secret: config.sessionSecret,
             resave: false,
             saveUninitialized: false,
@@ -45,6 +49,7 @@ function montar(app) {
         paginaProtegida: middleware.paginaProtegida,
         identificar: middleware.identificar,
         usuarios: userStore,
+        sesiones,
         servicio: authService,
         permisos,
     };
